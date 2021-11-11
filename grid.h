@@ -4,12 +4,15 @@
 
 struct Node {
     float x, y;
-    Node(float x, float y);
+    short int bcFlag; //deteminate if Node shoud have boundy condition point
+    Node(float x, float y, short int bcFlag);
     void printCoordinates();
+    void printBcFlag();
 };
 
 struct Element {
     int id[4]; //array of node IDs
+    double H[4][4]; //H matrix for each element
 
     Element(int id1, int id2, int id3, int id4);
     void printIdOfElement();

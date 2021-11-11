@@ -17,7 +17,6 @@ struct Node;
 class Element4_2D {
 public:
     double dNdKSI[4][4], dNdETA[4][4];
-    double H[4][4];
     double eta, ksi;
     Element4_2D();
     void printFor4IntegrationPoints();

@@ -58,8 +58,8 @@ void Element4_2D::printFor4IntegrationPoints() {
 
 Jacobian Element4_2D::jacobian(int i, int j, Element4_2D element4_2D, std::vector<Node> nodes, std::vector<Element> elements, Jacobian struct_jacobian) {
     // FOR TEST 
-    double xHardcode[4] = { 0, 0.025, 0.025, 0 };
-    double yHardcode[4] = { 0, 0, 0.025, 0.025 };
+    //double xHardcode[4] = { 0, 0.025, 0.025, 0 };
+    //double yHardcode[4] = { 0, 0, 0.025, 0.025 };
     double dXdKsi = 0;
     double dYdEta = 0;
     double dYdKsi = 0;
@@ -150,10 +150,10 @@ void Element9_2D::printFor9IntegrationPoints() {
      }
 }
 
-Jacobian Element9_2D::jacobian(int i, int j, Element9_2D element4_2D, std::vector<Node> nodes, std::vector<Element> elements, Jacobian struct_jacobian) {
-    // FOR TEST 
-    double xHardcode[4] = { 0, 0.025, 0.025, 0 };
-    double yHardcode[4] = { 0, 0, 0.025, 0.025 };
+Jacobian Element9_2D::jacobian(int i, int j, Element9_2D element9_2D, std::vector<Node> nodes, std::vector<Element> elements, Jacobian struct_jacobian) {
+   // FOR TEST 
+   // double xHardcode[4] = { 0, 0.025, 0.025, 0 };
+   // double yHardcode[4] = { 0, 0, 0.025, 0.025 };
     double dXdKsi = 0;
     double dYdEta = 0;
     double dYdKsi = 0;
@@ -169,10 +169,10 @@ Jacobian Element9_2D::jacobian(int i, int j, Element9_2D element4_2D, std::vecto
 
     //cout << endl << "!!!   "; elements[i].printIdOfElement(); cout << "   !!!" << endl;
     for (int k = 0; k < 4; k++) {
-        dXdKsi += element4_2D.dNdKSI[j][k] * nodes[elements[i].id[k] - 1].x;
-        dYdEta += element4_2D.dNdETA[j][k] * nodes[elements[i].id[k] - 1].y;
-        dYdKsi += element4_2D.dNdKSI[j][k] * nodes[elements[i].id[k] - 1].y;
-        dXdEta += element4_2D.dNdETA[j][k] * nodes[elements[i].id[k] - 1].x;
+        dXdKsi += element9_2D.dNdKSI[j][k] * nodes[elements[i].id[k] - 1].x;
+        dYdEta += element9_2D.dNdETA[j][k] * nodes[elements[i].id[k] - 1].y;
+        dYdKsi += element9_2D.dNdKSI[j][k] * nodes[elements[i].id[k] - 1].y;
+        dXdEta += element9_2D.dNdETA[j][k] * nodes[elements[i].id[k] - 1].x;
     }
 
     struct_jacobian.jacobian[0][0] = dXdKsi;

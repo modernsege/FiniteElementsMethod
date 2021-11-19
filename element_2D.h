@@ -13,6 +13,17 @@ class Grid;
 struct Element;
 struct Node;
 
+struct coordinates {
+    double x;
+    double y;
+};
+
+struct sideOfElement4_2d {
+    coordinates integrationPointsBC[2]; //pkt ca³kowania
+    double wages[2]; // wagi
+    double N[2][4]; //wart. f. kszta³tu w pkt calkowania
+};
+
 
 class Element4_2D {
 public:
@@ -20,10 +31,16 @@ public:
     double eta, ksi;
     Element4_2D();
     void printFor4IntegrationPoints();
-    Jacobian jacobian(int,int, Element4_2D, std::vector<Node>, std::vector<Element>, Jacobian);
-    
+    Jacobian jacobian(int, int, Element4_2D, std::vector<Node>, std::vector<Element>, Jacobian);
+    sideOfElement4_2d sides[4];
 };
 
+
+struct sideOfElement9_2d {
+    coordinates integrationPointsBC[3]; //pkt ca³kowania
+    double wages[3]; // wagi
+    double N[3][4]; //wart. f. kszta³tu w pkt calkowania
+};
 
 class Element9_2D {
 public:
@@ -32,6 +49,6 @@ public:
     Element9_2D();
     void printFor9IntegrationPoints();
     Jacobian jacobian(int, int, Element9_2D, std::vector<Node>, std::vector<Element>, Jacobian);
-
+    sideOfElement9_2d sides[4];
 
 };

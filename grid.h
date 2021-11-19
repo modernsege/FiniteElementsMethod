@@ -13,6 +13,13 @@ struct Node {
 struct Element {
     int id[4]; //array of node IDs
     double H[4][4]; //H matrix for each element
+    double k; //stala dla danego materialu (przy obliczaniu macierzy H)
+    double alpha; //wspolczynnik wyminay ciepla
+    double hbc[4][4]; //hbc matrix for each element
+    double detJ;
+    double detJinv;
+    double multipliedMatrix[2][2];
+
 
     Element(int id1, int id2, int id3, int id4);
     void printIdOfElement();

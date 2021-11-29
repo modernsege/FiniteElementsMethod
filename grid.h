@@ -2,6 +2,7 @@
 #include <vector>
 #include <math.h>  
 
+
 struct Node {
     float x, y;
     short int bcFlag; //deteminate if Node shoud have boundy condition point
@@ -19,9 +20,10 @@ struct Element {
     double detJ;
     double detJinv;
     double multipliedMatrix[2][2];
+    double p_vector[4];
+    double temperature;
 
-
-    Element(int id1, int id2, int id3, int id4);
+    Element(int id1, int id2, int id3, int id4, double alpha, double k, double temprature);
     void printIdOfElement();
 };
 
@@ -39,9 +41,20 @@ public:
     double deltaB; //value of the width (x coord) change between nodes
     std::vector <Node> nodes; //will contain all Nodes of Grid
     std::vector <Element> elements; //will contain all Elements instances of Grid
-    Grid(double H, double B, int nH, int nB);
+    std::vector<std::vector<double>> HGlobalne;
+    std::vector<double> PGlobal;
+    std::vector<double> T_vector_of_solutions;
+    Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature);
     void printElements();
     void printElementsAndNodesCoordinates();
     void printNodes();
-    void calculateJacobianForGrid(int);
+    void print_H_matrix();
+    void print_HBC_matrix();
+    void print_P_vector();
+    void print_H_with_HBC_Global();
+    void print_P_Global_vector();
+    void agregation();
+    void pVectorAgregation();
+    void solution_t();
+    void print_T_vector_of_solutions();
 };

@@ -67,8 +67,8 @@ Element4_2D::Element4_2D() {
         this->sides[i].N[1][2] = 0.25 * (1.0 + this->sides[i].integrationPointsBC[1].x) * (1.0 + this->sides[i].integrationPointsBC[1].y);
         this->sides[i].N[1][3] = 0.25 * (1.0 - this->sides[i].integrationPointsBC[1].x) * (1.0 + this->sides[i].integrationPointsBC[1].y);
         
-        this->sides[i].wages[0] = 1.0;
-        this->sides[i].wages[1] = 1.0;
+        this->sides[i].weight[0] = 1.0;
+        this->sides[i].weight[1] = 1.0;
     }
     
 
@@ -204,9 +204,9 @@ Element9_2D::Element9_2D() {
         this->sides[i].N[2][2] = 0.25 * (1.0 + this->sides[i].integrationPointsBC[2].x) * (1.0 + this->sides[i].integrationPointsBC[2].y);
         this->sides[i].N[2][3] = 0.25 * (1.0 - this->sides[i].integrationPointsBC[2].x) * (1.0 + this->sides[i].integrationPointsBC[2].y);
         
-        this->sides[i].wages[0] = 5.0 / 9.0;
-        this->sides[i].wages[1] = 8.0 / 9.0;
-        this->sides[i].wages[2] = 5.0 / 9.0;
+        this->sides[i].weight[0] = 5.0 / 9.0;
+        this->sides[i].weight[1] = 8.0 / 9.0;
+        this->sides[i].weight[2] = 5.0 / 9.0;
     }
 
 }

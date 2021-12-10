@@ -21,9 +21,12 @@ struct Element {
     double detJinv;
     double multipliedMatrix[2][2];
     double p_vector[4];
-    double temperature;
+    double temperature; 
+    double c; //cieplo wlascie
+    double ro; //gestosc
+    double C[4][4]; //C-matrix
 
-    Element(int id1, int id2, int id3, int id4, double alpha, double k, double temprature);
+    Element(int id1, int id2, int id3, int id4, double alpha, double k, double temprature, double specificHeat, double density);
     void printIdOfElement();
 };
 
@@ -44,17 +47,21 @@ public:
     std::vector<std::vector<double>> HGlobalne;
     std::vector<double> PGlobal;
     std::vector<double> T_vector_of_solutions;
-    Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature);
+    std::vector<std::vector<double>> CGlobal;
+    Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature, double specificHeat, double density);
     void printElements();
     void printElementsAndNodesCoordinates();
     void printNodes();
     void print_H_matrix();
+    void print_C_matrix();
     void print_HBC_matrix();
     void print_P_vector();
     void print_H_with_HBC_Global();
+    void print_C_Global();
     void print_P_Global_vector();
     void agregation();
     void pVectorAgregation();
-    void solution_t();
+    std::vector<double> solution_t(double tau, std::vector<double> init_temp);
     void print_T_vector_of_solutions();
+    void calculate_T_vector_in_iterations(double tau, std::vector<double> iteration_init_temp, int nuber_of_iterations);
 };

@@ -11,14 +11,19 @@ using namespace std;
 
 int main()
 {
-    Grid newGrid = Grid(0.1, 0.1, 4, 4, 4, 300.0, 25.0, 1200.0); //double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature 
+    Grid newGrid = Grid(0.1, 0.1, 4, 4, 9, 300.0, 25.0, 1200.0, 700.0, 7800.0); //double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature, double specificHeat, double density
     //0.2, 0.1, 5, 4      0.025, 0.025, 2, 2
     //newGrid.print_H_matrix();
+    //newGrid.print_C_matrix();
     //newGrid.print_HBC_matrix();
     //newGrid.print_P_vector();
-    newGrid.print_H_with_HBC_Global();
-    newGrid.print_P_Global_vector();
-    newGrid.print_T_vector_of_solutions();
+    //newGrid.print_H_with_HBC_Global();
+     //newGrid.print_P_Global_vector();
+     //newGrid.print_C_Global();
+    // newGrid.print_T_vector_of_solutions();
+    std::vector<double> init_temp;
+    init_temp.resize(newGrid.nN, 100.0);
+    newGrid.calculate_T_vector_in_iterations(50.0, init_temp, 10);
 
     //newGrid.printElements();
     //newGrid.printNodes();

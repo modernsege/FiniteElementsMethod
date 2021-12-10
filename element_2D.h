@@ -27,7 +27,7 @@ struct sideOfElement4_2d {
 
 class Element4_2D {
 public:
-    double dNdKSI[4][4], dNdETA[4][4];
+    double dNdKSI[4][4], dNdETA[4][4], N_valuses_in_integration_pionts[4][4];
     double eta, ksi;
     Element4_2D();
     void printFor4IntegrationPoints();
@@ -44,7 +44,7 @@ struct sideOfElement9_2d {
 
 class Element9_2D {
 public:
-    double dNdKSI[9][4], dNdETA[9][4];
+    double dNdKSI[9][4], dNdETA[9][4], N_valuses_in_integration_pionts[9][4];
     double eta, ksi;
     Element9_2D();
     void printFor9IntegrationPoints();

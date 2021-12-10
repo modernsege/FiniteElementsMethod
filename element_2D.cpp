@@ -31,6 +31,11 @@ Element4_2D::Element4_2D() {
         dNdETA[i][1] = -0.25 * (1.0 + ksi);
         dNdETA[i][2] = 0.25 * (1.0 + ksi);
         dNdETA[i][3] = 0.25 * (1.0 - ksi);
+
+        N_valuses_in_integration_pionts[i][0] = 0.25 * (1 - eta) * (1 - ksi);
+        N_valuses_in_integration_pionts[i][1] = 0.25 * (1 - eta) * (1 + ksi);
+        N_valuses_in_integration_pionts[i][2] = 0.25 * (1 + eta) * (1 + ksi);
+        N_valuses_in_integration_pionts[i][3] = 0.25 * (1 + eta) * (1 - ksi);
     }
 
 
@@ -157,7 +162,14 @@ Element9_2D::Element9_2D() {
         dNdETA[i][1] = -0.25 * (1.0 + ksi);
         dNdETA[i][2] = 0.25 * (1.0 + ksi);
         dNdETA[i][3] = 0.25 * (1.0 - ksi);
+
+        N_valuses_in_integration_pionts[i][0] = 0.25 * (1 - eta) * (1 - ksi);
+        N_valuses_in_integration_pionts[i][1] = 0.25 * (1 - eta) * (1 + ksi);
+        N_valuses_in_integration_pionts[i][2] = 0.25 * (1 + eta) * (1 + ksi);
+        N_valuses_in_integration_pionts[i][3] = 0.25 * (1 + eta) * (1 - ksi);
     }
+
+
 
     this->sides[0].integrationPointsBC[0].x = -sqrt(3.0/5.0);
     this->sides[0].integrationPointsBC[0].y = -1;

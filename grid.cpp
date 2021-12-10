@@ -25,7 +25,7 @@ void Node::printBcFlag() {
 
 
 //ELEMENT
-Element::Element(int id1, int id2, int id3, int id4, double alpha, double k, double temprature) {
+Element::Element(int id1, int id2, int id3, int id4, double alpha, double k, double temprature, double specificHeat, double density) {
     id[0] = id1;
     id[1] = id2;
     id[2] = id3;
@@ -35,12 +35,15 @@ Element::Element(int id1, int id2, int id3, int id4, double alpha, double k, dou
         for (int jH = 0; jH < 4; jH++) {
             H[iH][jH] = 0;
             hbc[iH][jH] = 0;
+            C[iH][jH] = 0;
         }
     }
 
     this->alpha = alpha;
     this->k = k;
     this->temperature = temprature;
+    this->c = specificHeat;
+    this->ro = density;
 }
 
 void Element::printIdOfElement()
@@ -96,7 +99,8 @@ void Grid::agregation() {
     for (int elementNum = 0; elementNum < this->nE; elementNum++) {
         for (int iH = 0; iH < 4; iH++) {
             for (int jH = 0; jH < 4; jH++) {
-                HGlobalne[elements[elementNum].id[iH] - 1][elements[elementNum].id[jH] - 1] += elements[elementNum].H[iH][jH] + elements[elementNum].hbc[iH][jH];
+                HGlobalne[elements[elementNum].id[iH] - 1][elements[elementNum].id[jH] - 1] += elements[elementNum].H[iH][jH] + elements[elementNum].hbc[iH][jH]; //H Global
+                CGlobal[elements[elementNum].id[iH] - 1][elements[elementNum].id[jH] - 1] += elements[elementNum].C[iH][jH]; //C Global
             }
         }
     }
@@ -126,8 +130,22 @@ void Grid::print_H_matrix() {
         }
         cout << "\n===========================\n===========================\n";
     }
+
 }
 
+void Grid::print_C_matrix() {
+    for (int i = 0; i < this->nE; i++) {
+        cout << "===========================\n";
+        cout << "\nC matrix for element " << i + 1 << "\n";
+        for (int iH = 0; iH < 4; iH++) {
+            for (int jH = 0; jH < 4; jH++) {
+                cout << elements[i].C[iH][jH] << "  ";
+            }
+            cout << "\n";
+        }
+        cout << "\n===========================\n===========================\n";
+    }
+}
 
 void Grid::print_HBC_matrix() {
     for (int i = 0; i < this->nE; i++) {
@@ -167,6 +185,16 @@ void Grid::print_H_with_HBC_Global() {
     }
 }
 
+void Grid::print_C_Global() {
+    cout << "\nC GLOBAL: \n";
+    for (int iC = 0; iC < CGlobal.size(); iC++) {
+        for (int jC = 0; jC < CGlobal[iC].size(); jC++) {
+            cout << CGlobal[iC][jC] << "\t";
+        }
+        cout << endl;
+    }
+}
+
 
 void Grid::print_P_Global_vector() {
     cout << "\nP GLOBAL: \n";
@@ -177,7 +205,7 @@ void Grid::print_P_Global_vector() {
 }
 
 
-Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature) {
+Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature,double specificHeat, double density) {
 
     this->H = H;
     this->B = B;
@@ -210,7 +238,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
             ID2 = ID1 + nH;
             ID3 = ID2 + 1;
             ID4 = ID1 + 1;
-            elements.push_back(Element(ID1, ID2, ID3, ID4, alpha, k, temprature));
+            elements.push_back(Element(ID1, ID2, ID3, ID4, alpha, k, temprature, specificHeat, density));
             elementinColumn++;
         }
         else if (elementinColumn == nH) {
@@ -218,7 +246,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
             ID2 = ID1 + nH;
             ID3 = ID2 + 1;
             ID4 = ID1 + 1;
-            elements.push_back(Element(ID1, ID2, ID3, ID4, alpha, k, temprature));
+            elements.push_back(Element(ID1, ID2, ID3, ID4, alpha, k, temprature, specificHeat, density));
             elementinColumn = 2;
         }
         ID1++;
@@ -227,6 +255,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
 
     HGlobalne.resize(nN, vector<double>(nN, 0)); //macierz H globalne dla grida ma miec wymiary nN na nN - wstepnie wypelniona zerami
     PGlobal.resize(nN, 0);
+    CGlobal.resize(nN, vector<double>(nN, 0)); //macierz C globalne dla grida ma miec wymiary nN na nN - wstepnie wypelniona zerami
 
 
     Jacobian newJacobian = Jacobian();
@@ -279,16 +308,19 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
                 //================================ calculate dNi/dNx, dNi/dy ===============================
                 double dNdx[4][4]; //store value of dNi/dNx and its transposition
                 double dNdy[4][4]; //store value of dNi/dy and its transposition
+                double c_matrix_temp[4][4]; //store value of N_valuses_in_integration_pionts and its transposition
 
 
                 for (int iH = 0; iH < 4; iH++) {
                     for (int jH = 0; jH < 4; jH++) {
                         dNdx[iH][jH] = (multipliedMatrix[0][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[0][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[0][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[0][1] * newElement.dNdETA[j][jH]);
                         dNdy[iH][jH] = (multipliedMatrix[1][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[1][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[1][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[1][1] * newElement.dNdETA[j][jH]);
+                        c_matrix_temp[iH][jH] = newElement.N_valuses_in_integration_pionts[j][iH] * newElement.N_valuses_in_integration_pionts[j][jH];
                     }
                 }
 
                 double Hmatrix[4][4];
+                double Cmatrix[4][4];
                 double k = elements[i].k;
 
 
@@ -296,6 +328,10 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
                     for (int jH = 0; jH < 4; jH++) {
                         Hmatrix[iH][jH] = ((dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
                         elements[i].H[iH][jH] += Hmatrix[iH][jH];
+
+                        Cmatrix[iH][jH] = (newElement.sides->weight[0] * elements[i].c * elements[i].ro * c_matrix_temp[iH][jH] * detJ);
+                        elements[i].C[iH][jH] += Cmatrix[iH][jH];
+                        //cout << elements[i].H[iH][jH]<<" "<<elements[i].c << " " << elements[i].ro << " " << c_matrix_temp[iH][jH] << " "<< detJ<< endl;
                     }
                 }
 
@@ -309,6 +345,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
                 }
                  cout << "===========================" << endl;
                  */
+           
 
             }
         }
@@ -396,6 +433,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
                 //================================ calculate dNi/dNx, dNi/dy ===============================
                 double dNdx[4][4]; //store value of dNi/dNx and its transposition
                 double dNdy[4][4]; //store value of dNi/dy and its transposition
+                double c_matrix_temp[4][4]; //store value of N_valuses_in_integration_pionts and its transposition
 
 
                 double weight = 1;
@@ -417,9 +455,11 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
                     for (int jH = 0; jH < 4; jH++) {
                         dNdx[iH][jH] = (multipliedMatrix[0][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[0][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[0][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[0][1] * newElement.dNdETA[j][jH]);
                         dNdy[iH][jH] = (multipliedMatrix[1][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[1][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[1][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[1][1] * newElement.dNdETA[j][jH]);
+                        c_matrix_temp[iH][jH] = newElement.N_valuses_in_integration_pionts[j][iH] * newElement.N_valuses_in_integration_pionts[j][jH];
                     }
                 }
                 double Hmatrix[4][4];
+                double Cmatrix[4][4];
                 double k = elements[i].k;
 
 
@@ -427,6 +467,9 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
                     for (int jH = 0; jH < 4; jH++) {
                         Hmatrix[iH][jH] = weight * ((dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
                         elements[i].H[iH][jH] += Hmatrix[iH][jH];
+
+                        Cmatrix[iH][jH] = (weight * elements[i].c * elements[i].ro * c_matrix_temp[iH][jH] * detJ);
+                        elements[i].C[iH][jH] += Cmatrix[iH][jH];
                     }
                 }
 
@@ -469,7 +512,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
 
                     for (int hbcRow = 0; hbcRow < 4; hbcRow++) {
                         elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[0] * Pc1[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;
-                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[1] * Pc2[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;                        
+                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[1] * Pc2[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;                      
                         elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[2] * Pc3[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;
                         for (int hbcColumn = 0; hbcColumn < 4; hbcColumn++) {
                             elements[i].hbc[hbcRow][hbcColumn] += newElement.sides->weight[0] * Pc1[hbcRow] * Pc1[hbcColumn] * detJ * elements[i].alpha;
@@ -486,32 +529,49 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
     }
     agregation();
     pVectorAgregation();
-    solution_t();
+
 }
 
 
 
-void Grid::solution_t(){
+
+
+std::vector<double> Grid::solution_t(double tau, std::vector<double> init_temp){
     int i, j, k;
     double m, s;
 
+    std::vector<double> min_max_result;
+
     std::vector<std::vector<double>> array = HGlobalne;
-    array.push_back(PGlobal);
+
+    //array.push_back(PGlobal);
     int n = HGlobalne.size();
     T_vector_of_solutions.resize(n, 0);
 
-    std::vector<double> temp = PGlobal;
+    std::vector<double> initialTempVector;
+    initialTempVector.resize(n, 0);
+
+    for (int i = 0; i<HGlobalne.size(); i++) {
+        for (int j = 0; j<HGlobalne.size(); j++) {
+            array[i][j] += CGlobal[i][j] / tau;
+            initialTempVector[i] += CGlobal[i][j] / tau * init_temp[j];
+            
+            //cout << array[i][j] << "\t";
+        }
+       // cout << initialTempVector[i] << "\n";
+    }
+
 
     for (int i = 0; i < nN; i++) {
-        temp[i] *= -1.0;
-        array[i].push_back(temp[i]);
+        array[i].push_back(PGlobal[i]+initialTempVector[i]);
+        //cout << PGlobal[i] + initialTempVector[i] << endl;
     }
 
     // eliminacja wspó³czynników
     for (i = 0; i < n - 1; i++){
         for (j = i + 1; j < n; j++){
             if (array[i][i] == 0.0) {
-                return; 
+                return min_max_result;
             }
             m = -array[j][i] / array[i][i];
             for (k = i + 1; k <= n; k++)
@@ -527,13 +587,16 @@ void Grid::solution_t(){
             s -= array[i][j] * T_vector_of_solutions[j];
         if (array[i][i] == 0.0) { 
             cout << "Operacja rozwiazywania ukladu rownan nie powiodla sie";
-            return; 
+            return min_max_result;
         }
         T_vector_of_solutions[i] = s / array[i][i];
     }
 
+
+
+
     //print_T_vector_of_solutions();
-    return;
+    return T_vector_of_solutions;
 }
 
 
@@ -541,5 +604,27 @@ void Grid::print_T_vector_of_solutions() {
     cout << "\nT vector of solutions: " << endl;
     for (int i = 0; i < nN ; i++) {
         cout << T_vector_of_solutions[i]<<endl;
+    }
+}
+
+void Grid::calculate_T_vector_in_iterations(double tau, std::vector<double> iteration_init_temp, int number_of_iterations) {
+    this->T_vector_of_solutions = iteration_init_temp;
+    for (int i = 0; i < number_of_iterations; i++) {
+        std::vector<double> resultin_iteration;
+        resultin_iteration = solution_t(tau, T_vector_of_solutions);
+        cout << "\nIteration " << i + 1;
+        print_T_vector_of_solutions();
+        double min = resultin_iteration[0];
+        double max = resultin_iteration[0];
+        for (int i = 1; i < T_vector_of_solutions.size(); i++) {
+            if (resultin_iteration[i] < min) {
+                min = resultin_iteration[i];
+            }
+            if (resultin_iteration[i] > max) {
+                max = resultin_iteration[i];
+            }
+        }
+        cout << "MIN = " << min << "\tMAX = " << max <<endl;
+
     }
 }

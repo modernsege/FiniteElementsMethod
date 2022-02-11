@@ -42,6 +42,7 @@ public:
     int nE; //number of elements
     double deltaH; //value of the height (y coord) change between nodes
     double deltaB; //value of the width (x coord) change between nodes
+    int nPc; //liczba punktow calkowania
     std::vector <Node> nodes; //will contain all Nodes of Grid
     std::vector <Element> elements; //will contain all Elements instances of Grid
     std::vector<std::vector<double>> HGlobalne;
@@ -52,10 +53,17 @@ public:
     void printElements();
     void printElementsAndNodesCoordinates();
     void printNodes();
+    void calculate_H_matrix(int);
+    void calculate_C_matrix(int);
+    void calculate_P_vector(int);
+    void calculate_HBC_matrix(int);
+    void reset_structures();//fill with 0
+
     void print_H_matrix();
     void print_C_matrix();
     void print_HBC_matrix();
     void print_P_vector();
+
     void print_H_with_HBC_Global();
     void print_C_Global();
     void print_P_Global_vector();

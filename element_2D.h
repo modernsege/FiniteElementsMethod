@@ -21,7 +21,7 @@ struct coordinates {
 struct sideOfElement4_2d {
     coordinates integrationPointsBC[2]; //pkt ca³kowania
     double weight[2]; // wagi
-    double N[2][4]; //wart. f. kszta³tu w pkt calkowania
+    double N[2][4]; //wart. f. kszta³tu w pkt calkowania (pierwzy wymiar 2, bo na scianie 2 pkt calkowania, czyli 4 wartosci f ksztaltu w pierwszym pkt calkowania i 4 w drugim)
 };
 
 

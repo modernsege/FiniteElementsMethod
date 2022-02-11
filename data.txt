@@ -1,0 +1,14 @@
+0.1	#H - wysokosc grida [m]
+0.1	#B - szerokosc grida [m]
+4	#nH - liczba elementow w wysokosci
+4	#nB - liczba elementow na szerokosci
+9	#nPc - liczba punktow calkowaia
+300.0	#alpha [W/m^2K] (wspolczynnik przenikania ciepla)
+25.0	#k (conductivity) [W/(m C)] wpsolczynnik przewodności materiału
+1200.0	#temperatura [C] 
+700.0	#cieplo wlasciwe [J/kgC] (specific heat)
+7800.0	#gęstość [kg/m3]
+100.0	#temperatura poczatkowa
+500.0	#czas symulacji [s]
+50.0	#simulation step time [s
+

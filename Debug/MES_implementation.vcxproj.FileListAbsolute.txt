@@ -1,0 +1,2 @@
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\Debug\MES_implementation.exe
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\Debug\MES_implementation.pdb

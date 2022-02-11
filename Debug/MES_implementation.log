@@ -1,0 +1,24 @@
+﻿  grid.cpp
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(66,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(73,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(86,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(90,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(181,25): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(182,29): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(191,25): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(192,29): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(202,25): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(209,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(210,27): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(216,23): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(365,12): warning C4101: "multipliedMatrix": lokalna zmienna, do której nie istnieje odwołanie
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(663,48): warning C4244: "argument": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(663,36): warning C4244: "argument": konwersja z "double" do "float", możliwa utrata danych
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(698,12): warning C4101: "detJinv": lokalna zmienna, do której nie istnieje odwołanie
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(700,14): warning C4101: "jacobianStructure": lokalna zmienna, do której nie istnieje odwołanie
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(699,12): warning C4101: "multipliedMatrix": lokalna zmienna, do której nie istnieje odwołanie
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(697,12): warning C4101: "detJ": lokalna zmienna, do której nie istnieje odwołanie
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(730,22): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(731,26): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\grid.cpp(807,27): warning C4018: "<": niezgodność typu ze znakiem/bez znaku
+  MES_implementation.vcxproj -> C:\Users\pc\Desktop\AGH\semestr 5\MES\lab1\MES_implementation_cpp\MES_implementation\Debug\MES_implementation.exe

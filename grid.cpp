@@ -3,6 +3,7 @@
 #include <math.h>  
 #include"grid.h"
 #include"element_2D.h"
+#include <limits>
 
 using namespace std;
 
@@ -204,6 +205,439 @@ void Grid::print_P_Global_vector() {
     }
 }
 
+void Grid::reset_structures() {
+    for (int i = 0; i < HGlobalne.size(); i++) {
+        for (int j = 0; j < HGlobalne[i].size(); j++) {
+            HGlobalne[i][j] = 0;
+            CGlobal[i][j] = 0;
+
+        }
+    }
+    for (int i = 0; i < PGlobal.size(); i++) {
+        PGlobal[i] = 0;
+    }
+}
+
+
+void Grid::calculate_H_matrix(int nPc) {
+    Jacobian newJacobian = Jacobian();
+    double detJ;
+    double detJinv;
+    double multipliedMatrix[2][2];
+    Jacobian jacobianStructure;
+
+    if (nPc == 4) {
+        //////////calculate Jacobian for each element
+        Element4_2D newElement = Element4_2D();
+        for (int i = 0; i < this->nE; i++) { //i -> number of element 
+            for (int iH = 0; iH < 4; iH++) {
+                for (int jH = 0; jH < 4; jH++) {
+                    elements[i].H[iH][jH] = 0;
+                }
+            }
+            for (int j = 0; j < nPc; j++) {//j -> number of integration point in one element
+
+                Jacobian newJacobian = Jacobian(); 
+                jacobianStructure = newElement.jacobian(i, j, newElement, nodes, elements, newJacobian);
+                detJ = (jacobianStructure.jacobian[0][0] * jacobianStructure.jacobian[1][1]) - (jacobianStructure.jacobian[1][0] * jacobianStructure.jacobian[0][1]);
+                detJinv = 1.0 / detJ;
+                for (int k = 0; k < 2; k++) {
+                    for (int l = 0; l < 2; l++) {
+                        multipliedMatrix[k][l] = jacobianStructure.jacobian_inv[k][l] * detJinv;
+                    }
+                }
+
+                //Print jacobian in each element and integration point
+              /* cout << "Element: " << i + 1 << " Integration Point: " << j + 1 << endl;
+               cout << "\nJacobian: " << endl;
+               for (int k = 0; k < 2; k++) {
+                   for (int l = 0; l < 2; l++) {
+                       cout << jacobianStructure.jacobian[k][l] << "\t";
+                   }
+                   cout << "\n";
+               }
+               cout << "\n";
+
+               cout << "detJ = " << detJ << endl;
+               cout << "1/detJ = " << detJinv << endl << endl;
+
+               cout << "Multiplied Matrix: " << endl;
+                for (int k = 0; k < 2; k++) {
+                    for (int l = 0; l < 2; l++) {
+                       cout << multipliedMatrix[k][l] << "\t";
+                    }
+                    cout << "\n";
+                }
+                */
+                //================================ calculate dNi/dx, dNi/dy ===============================
+                double dNdx[4][4]; //store value of dNi/dx and its transposition
+                double dNdy[4][4]; //store value of dNi/dy and its transposition
+
+
+
+                for (int iH = 0; iH < 4; iH++) {
+                    for (int jH = 0; jH < 4; jH++) {
+                        dNdx[iH][jH] = (multipliedMatrix[0][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[0][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[0][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[0][1] * newElement.dNdETA[j][jH]);
+                        dNdy[iH][jH] = (multipliedMatrix[1][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[1][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[1][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[1][1] * newElement.dNdETA[j][jH]);
+                    }
+                }
+
+                double Hmatrix[4][4];
+                double k = elements[i].k;
+                double weight = 1;
+
+
+                for (int iH = 0; iH < 4; iH++) {
+                    for (int jH = 0; jH < 4; jH++) {
+                        Hmatrix[iH][jH] = (weight * (dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
+                        elements[i].H[iH][jH] += Hmatrix[iH][jH];
+                    }
+                }
+            }
+        }
+    }
+    else if (nPc == 9) {
+        Element9_2D newElement = Element9_2D();
+        for (int i = 0; i < this->nE; i++) { //i -> number of element 
+            for (int iH = 0; iH < 4; iH++) {
+                for (int jH = 0; jH < 4; jH++) {
+                    elements[i].H[iH][jH] = 0;
+                }
+            }
+            for (int j = 0; j < nPc; j++) { //j -> number of integration point in one element
+                jacobianStructure = newElement.jacobian(i, j, newElement, nodes, elements, newJacobian);
+                detJ = (jacobianStructure.jacobian[0][0] * jacobianStructure.jacobian[1][1]) - (jacobianStructure.jacobian[1][0] * jacobianStructure.jacobian[0][1]);
+                detJinv = 1.0 / detJ;
+                for (int k = 0; k < 2; k++) {
+                    for (int l = 0; l < 2; l++) {
+                        multipliedMatrix[k][l] = jacobianStructure.jacobian_inv[k][l] * detJinv;
+
+                    }
+                }
+
+
+                //================================ calculate dNi/dNx, dNi/dy ===============================
+                double dNdx[4][4]; //store value of dNi/dNx and its transposition
+                double dNdy[4][4]; //store value of dNi/dy and its transposition
+
+
+                double weight = 1;
+                if (nPc == 9) {
+                    if (j == 0 || j == 2 || j == 6 || j == 8) {
+                        weight = 25.0 / 81.0;
+                    }
+                    else if (j == 4) {
+                        weight = 64.0 / 81.0;
+                    }
+                    else
+                    {
+                        weight = 40.0 / 81.0;
+                    }
+                }
+
+                // Element4_2D elem = Element4_2D();
+                for (int iH = 0; iH < 4; iH++) {
+                    for (int jH = 0; jH < 4; jH++) {
+                        dNdx[iH][jH] = (multipliedMatrix[0][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[0][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[0][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[0][1] * newElement.dNdETA[j][jH]);
+                        dNdy[iH][jH] = (multipliedMatrix[1][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[1][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[1][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[1][1] * newElement.dNdETA[j][jH]);
+                    }
+                }
+                double Hmatrix[4][4];
+                double k = elements[i].k;
+
+
+                for (int iH = 0; iH < 4; iH++) {
+                    for (int jH = 0; jH < 4; jH++) {
+                        Hmatrix[iH][jH] = weight * ((dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
+                        elements[i].H[iH][jH] += Hmatrix[iH][jH];
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
+void Grid::calculate_C_matrix(int nPc) {
+    Jacobian newJacobian = Jacobian();
+    double detJ;
+    double multipliedMatrix[2][2];
+    Jacobian jacobianStructure;
+    if (nPc == 4) {
+        //////////calculate Jacobian for each element
+        Element4_2D newElement = Element4_2D();
+        for (int i = 0; i < this->nE; i++) { //i -> number of element 
+            for (int iH = 0; iH < 4; iH++) {
+                for (int jH = 0; jH < 4; jH++) {
+                    elements[i].C[iH][jH] = 0;
+                }
+            }
+            for (int j = 0; j < nPc; j++) {//j -> number of integration point in one element
+
+                Jacobian newJacobian = Jacobian();
+                jacobianStructure = newElement.jacobian(i, j, newElement, nodes, elements, newJacobian);
+                detJ = (jacobianStructure.jacobian[0][0] * jacobianStructure.jacobian[1][1]) - (jacobianStructure.jacobian[1][0] * jacobianStructure.jacobian[0][1]);
+
+
+                double c_matrix_temp[4][4]; //store value of N_valuses_in_integration_pionts and its transposition
+
+
+                for (int iC = 0; iC < 4; iC++) {
+                    for (int jC = 0; jC < 4; jC++) {
+                        c_matrix_temp[iC][jC] = newElement.N_valuses_in_integration_pionts[j][iC] * newElement.N_valuses_in_integration_pionts[j][jC];
+                    }
+                }
+
+
+                double Cmatrix[4][4];
+
+
+
+                for (int iC = 0; iC < 4; iC++) {
+                    for (int jC = 0; jC < 4; jC++) {
+                        Cmatrix[iC][jC] = (newElement.sides->weight[0] * elements[i].c * elements[i].ro * c_matrix_temp[iC][jC] * detJ);
+                        elements[i].C[iC][jC] += Cmatrix[iC][jC];
+                        //cout << elements[i].H[iH][jH]<<" "<<elements[i].c << " " << elements[i].ro << " " << c_matrix_temp[iH][jH] << " "<< detJ<< endl;
+                    }
+                }
+
+            }
+        }
+    }
+    else if (nPc == 9) {
+        Element9_2D newElement = Element9_2D();
+        for (int i = 0; i < this->nE; i++) { //i -> number of element 
+            for (int iH = 0; iH < 4; iH++) {
+                for (int jH = 0; jH < 4; jH++) {
+                    elements[i].C[iH][jH] = 0;
+                }
+            }
+            for (int j = 0; j < nPc; j++) { //j -> number of integration point in one element
+                jacobianStructure = newElement.jacobian(i, j, newElement, nodes, elements, newJacobian);
+                detJ = (jacobianStructure.jacobian[0][0] * jacobianStructure.jacobian[1][1]) - (jacobianStructure.jacobian[1][0] * jacobianStructure.jacobian[0][1]);
+
+
+                double c_matrix_temp[4][4]; //store value of N_valuses_in_integration_pionts and its transposition
+
+
+               // double weight = 1;
+                //if (nPc == 9) {
+                //    if (j == 0 || j == 2 || j == 6 || j == 8) {
+                //        weight = 25.0 / 81.0;
+                //    }
+                ///    else if (j == 4) {
+                 //       weight = 64.0 / 81.0;
+                //    }
+                //    else
+                //    {
+                       // weight = 40.0 / 81.0;
+                //    }
+               // }
+
+                // Element4_2D elem = Element4_2D();
+                for (int iC = 0; iC < 4; iC++) {
+                    for (int jC = 0; jC < 4; jC++) {
+                        c_matrix_temp[iC][jC] = newElement.N_valuses_in_integration_pionts[j][iC] * newElement.N_valuses_in_integration_pionts[j][jC];
+                    }
+                }
+
+                double Cmatrix[4][4];
+
+
+
+                for (int iC = 0; iC < 4; iC++) {
+                    for (int jC = 0; jC < 4; jC++) {
+
+                        if (j == 0 || j == 2 || j == 6 || j == 8) {
+                            Cmatrix[iC][jC] = (pow(newElement.sides->weight[0],2) * elements[i].c * elements[i].ro * c_matrix_temp[iC][jC] * detJ);
+                        }
+                        else if (j == 4) {
+                            Cmatrix[iC][jC] = (pow(newElement.sides->weight[1], 2) * elements[i].c * elements[i].ro * c_matrix_temp[iC][jC] * detJ);
+                           }
+                        else {
+                            Cmatrix[iC][jC] = (pow(newElement.sides->weight[2], 2) * elements[i].c * elements[i].ro * c_matrix_temp[iC][jC] * detJ);
+                        }
+                        
+                        elements[i].C[iC][jC] += Cmatrix[iC][jC];
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+
+
+void Grid::calculate_P_vector(int nPc) {
+    if (nPc == 4) {
+
+        //////////calculate Jacobian for each element
+        Element4_2D newElement = Element4_2D();
+
+
+        for (int i = 0; i < this->nE; i++) {
+            double alpha = elements[i].alpha;
+
+            for (int vector_iterator = 0; vector_iterator < 4; vector_iterator++) {
+                elements[i].p_vector[vector_iterator] = 0;
+            }
+
+
+            for (int i1 = 0; i1 < 4; i1++) { //iterator i1 reprezentuje sciane elementu
+                if (nodes[elements[i].id[i1] - 1].bcFlag == 1 && nodes[elements[i].id[(i1 + 1) % 4] - 1].bcFlag == 1) {
+                    double Pc1[4] = { 0,0,0,0 };
+                    double Pc2[4] = { 0,0,0,0 };
+
+
+                    for (int l = 0; l < 4; l++) {
+                        Pc1[l] = newElement.sides[i1].N[0][l]; //wartorsci f. ksztaltu w piierwszym pkt calkowania
+                        Pc2[l] = newElement.sides[i1].N[1][l]; //wartorsci f. ksztaltu w drugim pkt calkowania
+                    }
+
+                    double detJ = sqrt(pow(nodes[elements[i].id[i1] - 1].x - nodes[elements[i].id[(i1 + 1) % 4] - 1].x, 2) + pow(nodes[elements[i].id[i1] - 1].y - nodes[elements[i].id[(i1 + 1) % 4] - 1].y, 2)) / 2.0; //Jacobian = Dlugosc bokku/2, dlugosc boku liczona z wekotra, potem dlugosc wektora
+
+                    for (int pIterator = 0; pIterator < 4; pIterator++) {
+                        elements[i].p_vector[pIterator] += newElement.sides[i1].weight[0] * Pc1[pIterator] * elements[i].temperature * elements[i].alpha * detJ;
+                        elements[i].p_vector[pIterator] += newElement.sides[i1].weight[1] * Pc2[pIterator] * elements[i].temperature * elements[i].alpha * detJ;
+                    }
+
+                }
+
+            }
+
+        }
+
+
+    }
+    else if (nPc == 9) {
+        Element9_2D newElement = Element9_2D();
+
+
+        for (int i = 0; i < this->nE; i++) {
+            double alpha = elements[i].alpha;
+            for (int vextor_iterator = 0; vextor_iterator < 4; vextor_iterator++) {
+                elements[i].p_vector[vextor_iterator] = 0;
+            }
+
+            for (int i1 = 0; i1 < 4; i1++) {
+                if (nodes[elements[i].id[i1] - 1].bcFlag == 1 && nodes[elements[i].id[(i1 + 1) % 4] - 1].bcFlag == 1) {
+                    double Pc1[4] = { 0,0,0,0 };
+                    double Pc2[4] = { 0,0,0,0 };
+                    double Pc3[4] = { 0,0,0,0 };
+
+
+                    for (int l = 0; l < 4; l++) {
+                        Pc1[l] = newElement.sides[i1].N[0][l];
+                        Pc2[l] = newElement.sides[i1].N[1][l];
+                        Pc3[l] = newElement.sides[i1].N[2][l];
+                    }
+
+                    double detJ = sqrt(pow(nodes[elements[i].id[i1] - 1].x - nodes[elements[i].id[(i1 + 1) % 4] - 1].x, 2) + pow(nodes[elements[i].id[i1] - 1].y - nodes[elements[i].id[(i1 + 1) % 4] - 1].y, 2)) / 2.0; //Jacobian = Dlugosc bokku/2, dlugosc boku liczona z wekotra, potem dlugosc wektora
+
+                    for (int pIterator = 0; pIterator < 4; pIterator++) {
+                        elements[i].p_vector[pIterator] += newElement.sides[i1].weight[0] * Pc1[pIterator] * elements[i].temperature * elements[i].alpha * detJ;
+                        elements[i].p_vector[pIterator] += newElement.sides[i1].weight[1] * Pc2[pIterator] * elements[i].temperature * elements[i].alpha * detJ;
+                        elements[i].p_vector[pIterator] += newElement.sides[i1].weight[2] * Pc3[pIterator] * elements[i].temperature * elements[i].alpha * detJ;
+                    }
+
+                }
+
+            }
+
+        }
+    }
+}
+
+void Grid::calculate_HBC_matrix(int nPc) {
+    if (nPc == 4) {
+        Element4_2D newElement = Element4_2D();
+      
+        //******* HBC *******
+        for (int i = 0; i < this->nE; i++) {
+            for (int iH = 0; iH < 4; iH++) {
+                for (int jH = 0; jH < 4; jH++) {
+                    elements[i].hbc[iH][jH] = 0;
+                }
+            }
+
+            double alpha = elements[i].alpha;
+
+
+            for (int i1 = 0; i1 < 4; i1++) {
+                if (nodes[elements[i].id[i1] - 1].bcFlag == 1 && nodes[elements[i].id[(i1 + 1) % 4] - 1].bcFlag == 1) {
+                    double Pc1[4] = { 0,0,0,0 };
+                    double Pc2[4] = { 0,0,0,0 };
+
+
+                    for (int l = 0; l < 4; l++) {
+                        Pc1[l] = newElement.sides[i1].N[0][l]; //wartorsci f. ksztaltu w piierwszym pkt calkowania
+                        Pc2[l] = newElement.sides[i1].N[1][l]; //wartorsci f. ksztaltu w drugim pkt calkowania
+                    }
+
+                    double detJ = sqrt(pow(nodes[elements[i].id[i1] - 1].x - nodes[elements[i].id[(i1 + 1) % 4] - 1].x, 2) + pow(nodes[elements[i].id[i1] - 1].y - nodes[elements[i].id[(i1 + 1) % 4] - 1].y, 2)) / 2.0; //Jacobian = Dlugosc bokku/2, dlugosc boku liczona z wekotra, potem dlugosc wektora
+
+                    for (int hbcRow = 0; hbcRow < 4; hbcRow++) {
+                        for (int hbcColumn = 0; hbcColumn < 4; hbcColumn++) {
+                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides[i1].weight[0] * Pc1[hbcRow] * Pc1[hbcColumn] * detJ * elements[i].alpha;
+                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides[i1].weight[1] * Pc2[hbcRow] * Pc2[hbcColumn] * detJ * elements[i].alpha;
+                        }
+                    }
+
+                }
+
+            }
+
+        }
+
+
+    }
+    else if (nPc == 9) {
+        Element9_2D newElement = Element9_2D();
+
+        // *** HBC ***
+        for (int i = 0; i < this->nE; i++) {
+            for (int iH = 0; iH < 4; iH++) {
+                for (int jH = 0; jH < 4; jH++) {
+                    elements[i].hbc[iH][jH] = 0;
+                }
+            }
+
+            double alpha = elements[i].alpha;
+
+
+            for (int i1 = 0; i1 < 4; i1++) {
+                if (nodes[elements[i].id[i1] - 1].bcFlag == 1 && nodes[elements[i].id[(i1 + 1) % 4] - 1].bcFlag == 1) {
+                    double Pc1[4] = { 0,0,0,0 };
+                    double Pc2[4] = { 0,0,0,0 };
+                    double Pc3[4] = { 0,0,0,0 };
+
+
+                    for (int l = 0; l < 4; l++) {
+                        Pc1[l] = newElement.sides[i1].N[0][l];
+                        Pc2[l] = newElement.sides[i1].N[1][l];
+                        Pc3[l] = newElement.sides[i1].N[2][l];
+                    }
+
+                    double detJ = sqrt(pow(nodes[elements[i].id[i1] - 1].x - nodes[elements[i].id[(i1 + 1) % 4] - 1].x, 2) + pow(nodes[elements[i].id[i1] - 1].y - nodes[elements[i].id[(i1 + 1) % 4] - 1].y, 2)) / 2.0; //Jacobian = Dlugosc bokku/2, dlugosc boku liczona z wekotra, potem dlugosc wektora
+
+                    for (int hbcRow = 0; hbcRow < 4; hbcRow++) {
+                        for (int hbcColumn = 0; hbcColumn < 4; hbcColumn++) {
+                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides->weight[0] * Pc1[hbcRow] * Pc1[hbcColumn] * detJ * elements[i].alpha;
+                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides->weight[1] * Pc2[hbcRow] * Pc2[hbcColumn] * detJ * elements[i].alpha;
+                            elements[i].hbc[hbcRow][hbcColumn] +=  newElement.sides->weight[2] * Pc3[hbcRow] * Pc3[hbcColumn] * detJ * elements[i].alpha;
+                        }
+                    }
+
+                }
+
+            }
+
+        }
+    }
+}
+
 
 Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, double temprature,double specificHeat, double density) {
 
@@ -257,6 +691,7 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
     PGlobal.resize(nN, 0);
     CGlobal.resize(nN, vector<double>(nN, 0)); //macierz C globalne dla grida ma miec wymiary nN na nN - wstepnie wypelniona zerami
 
+    this->nPc = nPc;
 
     Jacobian newJacobian = Jacobian();
     double detJ;
@@ -264,272 +699,13 @@ Grid::Grid(double H, double B, int nH, int nB, int nPc, double alpha, double k, 
     double multipliedMatrix[2][2];
     Jacobian jacobianStructure;
 
-    if (nPc == 4) {
-        //////////calculate Jacobian for each element
-        Element4_2D newElement = Element4_2D();
-        for (int i = 0; i < this->nE; i++) { //i -> number of element 
-            for (int j = 0; j < nPc; j++) {//j -> number of integration point in one element
 
-                Jacobian newJacobian = Jacobian();
-                jacobianStructure = newElement.jacobian(i, j, newElement, nodes, elements, newJacobian);
-                detJ = (jacobianStructure.jacobian[0][0] * jacobianStructure.jacobian[1][1]) - (jacobianStructure.jacobian[1][0] * jacobianStructure.jacobian[0][1]);
-                detJinv = 1.0 / detJ;
-                for (int k = 0; k < 2; k++) {
-                    for (int l = 0; l < 2; l++) {
-                        multipliedMatrix[k][l] = jacobianStructure.jacobian_inv[k][l] * detJinv;
-                    }
-                }
-
-                //Print jacobian in each element and integration point
-              /* cout << "Element: " << i + 1 << " Integration Point: " << j + 1 << endl;
-               cout << "\nJacobian: " << endl;
-               for (int k = 0; k < 2; k++) {
-                   for (int l = 0; l < 2; l++) {
-                       cout << jacobianStructure.jacobian[k][l] << "\t";
-                   }
-                   cout << "\n";
-               }
-               cout << "\n";
-
-               cout << "detJ = " << detJ << endl;
-               cout << "1/detJ = " << detJinv << endl << endl;
-              
-               cout << "Multiplied Matrix: " << endl;
-                for (int k = 0; k < 2; k++) {
-                    for (int l = 0; l < 2; l++) {
-                       cout << multipliedMatrix[k][l] << "\t";
-                    }
-                    cout << "\n";
-                }
-                */
-
-
-
-                //================================ calculate dNi/dNx, dNi/dy ===============================
-                double dNdx[4][4]; //store value of dNi/dNx and its transposition
-                double dNdy[4][4]; //store value of dNi/dy and its transposition
-                double c_matrix_temp[4][4]; //store value of N_valuses_in_integration_pionts and its transposition
-
-
-                for (int iH = 0; iH < 4; iH++) {
-                    for (int jH = 0; jH < 4; jH++) {
-                        dNdx[iH][jH] = (multipliedMatrix[0][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[0][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[0][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[0][1] * newElement.dNdETA[j][jH]);
-                        dNdy[iH][jH] = (multipliedMatrix[1][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[1][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[1][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[1][1] * newElement.dNdETA[j][jH]);
-                        c_matrix_temp[iH][jH] = newElement.N_valuses_in_integration_pionts[j][iH] * newElement.N_valuses_in_integration_pionts[j][jH];
-                    }
-                }
-
-                double Hmatrix[4][4];
-                double Cmatrix[4][4];
-                double k = elements[i].k;
-
-
-                for (int iH = 0; iH < 4; iH++) {
-                    for (int jH = 0; jH < 4; jH++) {
-                        Hmatrix[iH][jH] = ((dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
-                        elements[i].H[iH][jH] += Hmatrix[iH][jH];
-
-                        Cmatrix[iH][jH] = (newElement.sides->weight[0] * elements[i].c * elements[i].ro * c_matrix_temp[iH][jH] * detJ);
-                        elements[i].C[iH][jH] += Cmatrix[iH][jH];
-                        //cout << elements[i].H[iH][jH]<<" "<<elements[i].c << " " << elements[i].ro << " " << c_matrix_temp[iH][jH] << " "<< detJ<< endl;
-                    }
-                }
-
-
-                /*cout << "\nH matrix in " << j + 1 << " integration point\n";
-                for (int iH = 0; iH < 4; iH++) {
-                    for (int jH = 0; jH < 4; jH++) {
-                        cout << Hmatrix[iH][jH] << "  ";
-                    }
-                     cout << "\n";
-                }
-                 cout << "===========================" << endl;
-                 */
-           
-
-            }
-        }
-
-        //******* HBC *******
-        for (int i = 0; i < this->nE; i++) {
-
-            double alpha = elements[i].alpha;
-
-            for (int vector_iterator = 0; vector_iterator < 4; vector_iterator++) {
-                elements[i].p_vector[vector_iterator] = 0;
-            }
-
-
-            for (int i1 = 0; i1 < 4; i1++) {
-                if (nodes[elements[i].id[i1] - 1].bcFlag == 1 && nodes[elements[i].id[(i1 + 1) % 4] - 1].bcFlag == 1) {
-                    double Pc1[4] = { 0,0,0,0 };
-                    double Pc2[4] = { 0,0,0,0 };
-
-
-                    for (int l = 0; l < 4; l++) {
-                        Pc1[l] = newElement.sides[i1].N[0][l]; //wartorsci f. ksztaltu w piierwszym pkt calkowania
-                        Pc2[l] = newElement.sides[i1].N[1][l]; //wartorsci f. ksztaltu w drugim pkt calkowania
-                    }
-
-                    double detJ = sqrt(pow(nodes[elements[i].id[i1] - 1].x - nodes[elements[i].id[(i1 + 1) % 4] - 1].x, 2) + pow(nodes[elements[i].id[i1] - 1].y - nodes[elements[i].id[(i1 + 1) % 4] - 1].y, 2)) / 2.0; //Jacobian = Dlugosc bokku/2, dlugosc boku liczona z wekotra, potem dlugosc wektora
-
-                    for (int hbcRow = 0; hbcRow < 4; hbcRow++) {
-                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[0] * Pc1[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;
-                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[1] * Pc2[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;
-                        for (int hbcColumn = 0; hbcColumn < 4; hbcColumn++) {
-                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides[i1].weight[0] * Pc1[hbcRow] * Pc1[hbcColumn] * detJ * elements[i].alpha;
-                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides[i1].weight[1] * Pc2[hbcRow] * Pc2[hbcColumn] * detJ * elements[i].alpha;
-                        }
-                    }
-
-                }
-
-            }
-
-        }
-
-
-    }
-    else if (nPc == 9) {
-        Element9_2D newElement = Element9_2D();
-        for (int i = 0; i < this->nE; i++) { //i -> number of element 
-            for (int j = 0; j < nPc; j++) { //j -> number of integration point in one element
-                jacobianStructure = newElement.jacobian(i, j, newElement, nodes, elements, newJacobian);
-                detJ = (jacobianStructure.jacobian[0][0] * jacobianStructure.jacobian[1][1]) - (jacobianStructure.jacobian[1][0] * jacobianStructure.jacobian[0][1]);
-                detJinv = 1.0 / detJ;
-                for (int k = 0; k < 2; k++) {
-                    for (int l = 0; l < 2; l++) {
-                        multipliedMatrix[k][l] = jacobianStructure.jacobian_inv[k][l] * detJinv;
-
-                    }
-                }
-
-
-                //Print jacobian in each element and integration point
-                /*cout << "Element: " << i + 1 << " Integration Point: " << j + 1 << endl;
-                cout << "\nJacobian: " << endl;
-                for (int k = 0; k < 2; k++) {
-                    for (int l = 0; l < 2; l++) {
-                        cout << jacobianStructure.jacobian[k][l] << "\t";
-                    }
-                    cout << "\n";
-                }
-                cout << "\n";
-
-                cout << "detJ = " << detJ << endl;
-                cout << "1/detJ = " << detJinv << endl << endl;
-
-                cout << "Multiplied Matrix: " << endl;
-                for (int k = 0; k < 2; k++) {
-                    for (int l = 0; l < 2; l++) {
-                               cout << multipliedMatrix[k][l] << "\t";
-                    }
-                        cout << "\n";
-                }
-                cout << "===========================" << endl;*/
-
-
-
-                //================================ calculate dNi/dNx, dNi/dy ===============================
-                double dNdx[4][4]; //store value of dNi/dNx and its transposition
-                double dNdy[4][4]; //store value of dNi/dy and its transposition
-                double c_matrix_temp[4][4]; //store value of N_valuses_in_integration_pionts and its transposition
-
-
-                double weight = 1;
-                if (nPc == 9) {
-                    if (j == 0 || j == 2 || j == 6 || j == 8) {
-                        weight = 25.0 / 81.0;
-                    }
-                    else if (j == 4) {
-                        weight = 64.0 / 81.0;
-                    }
-                    else
-                    {
-                        weight = 40.0 / 81.0;
-                    }
-                }
-
-                // Element4_2D elem = Element4_2D();
-                for (int iH = 0; iH < 4; iH++) {
-                    for (int jH = 0; jH < 4; jH++) {
-                        dNdx[iH][jH] = (multipliedMatrix[0][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[0][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[0][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[0][1] * newElement.dNdETA[j][jH]);
-                        dNdy[iH][jH] = (multipliedMatrix[1][0] * newElement.dNdKSI[j][iH] + multipliedMatrix[1][1] * newElement.dNdETA[j][iH]) * (multipliedMatrix[1][0] * newElement.dNdKSI[j][jH] + multipliedMatrix[1][1] * newElement.dNdETA[j][jH]);
-                        c_matrix_temp[iH][jH] = newElement.N_valuses_in_integration_pionts[j][iH] * newElement.N_valuses_in_integration_pionts[j][jH];
-                    }
-                }
-                double Hmatrix[4][4];
-                double Cmatrix[4][4];
-                double k = elements[i].k;
-
-
-                for (int iH = 0; iH < 4; iH++) {
-                    for (int jH = 0; jH < 4; jH++) {
-                        Hmatrix[iH][jH] = weight * ((dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
-                        elements[i].H[iH][jH] += Hmatrix[iH][jH];
-
-                        Cmatrix[iH][jH] = (weight * elements[i].c * elements[i].ro * c_matrix_temp[iH][jH] * detJ);
-                        elements[i].C[iH][jH] += Cmatrix[iH][jH];
-                    }
-                }
-
-                // PRINT H MATRIX IN EACH INTEGRATION POINT
-                /*cout << "\nH matrix in " << j + 1 << " integration point\n";
-                for (int iH = 0; iH < 4; iH++) {
-                    for (int jH = 0; jH < 4; jH++) {
-                        Hmatrix[iH][jH] = weight * ((dNdx[iH][jH] + dNdy[iH][jH]) * detJ * k);
-                        cout << Hmatrix[iH][jH] << "  ";
-                        elements[i].H[iH][jH] += Hmatrix[iH][jH];
-                    }
-                    cout << "\n";
-                }*/
-
-            }
-        }
-
-        // *** HBC ***
-        for (int i = 0; i < this->nE; i++) {
-
-            double alpha = elements[i].alpha;
-            for (int vextor_iterator = 0; vextor_iterator < 4; vextor_iterator++) {
-                elements[i].p_vector[vextor_iterator] = 0;
-            }
-
-            for (int i1 = 0; i1 < 4; i1++) {
-                if (nodes[elements[i].id[i1] - 1].bcFlag == 1 && nodes[elements[i].id[(i1 + 1) % 4] - 1].bcFlag == 1) {
-                    double Pc1[4] = { 0,0,0,0 };
-                    double Pc2[4] = { 0,0,0,0 };
-                    double Pc3[4] = { 0,0,0,0 };
-
-
-                    for (int l = 0; l < 4; l++) {
-                        Pc1[l] = newElement.sides[i1].N[0][l];
-                        Pc2[l] = newElement.sides[i1].N[1][l];
-                        Pc3[l] = newElement.sides[i1].N[2][l];
-                    }
-
-                    double detJ = sqrt(pow(nodes[elements[i].id[i1] - 1].x - nodes[elements[i].id[(i1 + 1) % 4] - 1].x, 2) + pow(nodes[elements[i].id[i1] - 1].y - nodes[elements[i].id[(i1 + 1) % 4] - 1].y, 2)) / 2.0; //Jacobian = Dlugosc bokku/2, dlugosc boku liczona z wekotra, potem dlugosc wektora
-
-                    for (int hbcRow = 0; hbcRow < 4; hbcRow++) {
-                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[0] * Pc1[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;
-                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[1] * Pc2[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;                      
-                        elements[i].p_vector[hbcRow] += newElement.sides[i1].weight[2] * Pc3[hbcRow] * elements[i].temperature * elements[i].alpha * detJ;
-                        for (int hbcColumn = 0; hbcColumn < 4; hbcColumn++) {
-                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides->weight[0] * Pc1[hbcRow] * Pc1[hbcColumn] * detJ * elements[i].alpha;
-                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides->weight[1] * Pc2[hbcRow] * Pc2[hbcColumn] * detJ * elements[i].alpha;
-                            elements[i].hbc[hbcRow][hbcColumn] += newElement.sides->weight[2] * Pc3[hbcRow] * Pc3[hbcColumn] * detJ * elements[i].alpha;
-                        }
-                    }
-
-                }
-
-            }
-
-        }
-    }
+    calculate_H_matrix(nPc);
+    calculate_C_matrix(nPc);
+    calculate_HBC_matrix(nPc);
+    calculate_P_vector(nPc);
     agregation();
     pVectorAgregation();
-
 }
 
 
@@ -544,26 +720,25 @@ std::vector<double> Grid::solution_t(double tau, std::vector<double> init_temp){
 
     std::vector<std::vector<double>> array = HGlobalne;
 
-    //array.push_back(PGlobal);
+
     int n = HGlobalne.size();
     T_vector_of_solutions.resize(n, 0);
 
-    std::vector<double> initialTempVector;
-    initialTempVector.resize(n, 0);
+    std::vector<double> tempVector;
+    tempVector.resize(n, 0);
 
     for (int i = 0; i<HGlobalne.size(); i++) {
         for (int j = 0; j<HGlobalne.size(); j++) {
             array[i][j] += CGlobal[i][j] / tau;
-            initialTempVector[i] += CGlobal[i][j] / tau * init_temp[j];
-            
-            //cout << array[i][j] << "\t";
+            tempVector[i] += CGlobal[i][j] / tau * init_temp[j];
+           
         }
-       // cout << initialTempVector[i] << "\n";
+
     }
 
 
     for (int i = 0; i < nN; i++) {
-        array[i].push_back(PGlobal[i]+initialTempVector[i]);
+        array[i].push_back(PGlobal[i]+tempVector[i]);
         //cout << PGlobal[i] + initialTempVector[i] << endl;
     }
 
@@ -610,10 +785,23 @@ void Grid::print_T_vector_of_solutions() {
 void Grid::calculate_T_vector_in_iterations(double tau, std::vector<double> iteration_init_temp, int number_of_iterations) {
     this->T_vector_of_solutions = iteration_init_temp;
     for (int i = 0; i < number_of_iterations; i++) {
+        if (i > 0) {
+            reset_structures();
+            calculate_H_matrix(this->nPc);
+            calculate_C_matrix(this->nPc);
+            calculate_HBC_matrix(this->nPc);
+            calculate_P_vector(this->nPc);
+            agregation();
+            pVectorAgregation();
+        }
+
+        typedef numeric_limits< double > dbl;
+        cout.precision(dbl::max_digits10);
+
         std::vector<double> resultin_iteration;
         resultin_iteration = solution_t(tau, T_vector_of_solutions);
-        cout << "\nIteration " << i + 1;
-        print_T_vector_of_solutions();
+        cout << "\nIteration " << i + 1 << endl;
+        //print_T_vector_of_solutions();
         double min = resultin_iteration[0];
         double max = resultin_iteration[0];
         for (int i = 1; i < T_vector_of_solutions.size(); i++) {
@@ -624,7 +812,7 @@ void Grid::calculate_T_vector_in_iterations(double tau, std::vector<double> iter
                 max = resultin_iteration[i];
             }
         }
-        cout << "MIN = " << min << "\tMAX = " << max <<endl;
+        cout << "MIN = " << min << "\tMAX = " << max ;
 
     }
 }
